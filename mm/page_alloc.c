@@ -3521,37 +3521,7 @@ get_page_from_freelist(gfp_t gfp_mask, unsigned int order, int alloc_flags,
 			}
 		}
 
-		if (no_fallback && nr_online_nodes > 1 &&
-		    zone != ac->preferred_zoneref->zone) {
-			int local_nid;
-
-			/*
-			 * If moving to a remote node, retry but allow
-			 * fragmenting fallbacks. Locality is more important
-			 * than fragmentation avoidance.
-			 */
-			local_nid = zone_to_nid(ac->preferred_zoneref->zone);
-			if (zone_to_nid(zone) != local_nid) {
-				alloc_flags &= ~ALLOC_NOFRAGMENT;
-				goto retry;
-			}
-		}
-
-		watermark = zone->watermark[alloc_flags & ALLOC_WMARK_MASK];
-		/*
-		 * Allow high, atomic, harder order-0 allocation requests
-		 * to skip the ->watermark_boost for min watermark check.
-		 * In doing so, check for:
-		 *  1) ALLOC_WMARK_MIN - Allow to wake up kswapd in the
-		 *			 slow path.
-		 *  2) ALLOC_HIGH - Allow high priority requests.
-		 *  3) ALLOC_HARDER - Allow (__GFP_ATOMIC && !__GFP_NOMEMALLOC),
-		 *			of the others.
-		 */
-		if (unlikely(!order && !(alloc_flags & ALLOC_WMARK_MASK) &&
-		     (alloc_flags & (ALLOC_HARDER | ALLOC_HIGH)))) {
-			mark = zone->_watermark[WMARK_MIN];
-		}
+		mark = zone->watermark[alloc_flags & ALLOC_WMARK_MASK];
 		if (!zone_watermark_fast(zone, order, mark,
 				       ac_classzone_idx(ac), alloc_flags)) {
 			int ret;
@@ -7656,7 +7626,6 @@ static void __setup_per_zone_wmarks(void)
 			    mult_frac(zone->managed_pages,
 				      watermark_scale_factor, 10000));
 
-		zone->watermark_boost = 0;
 		zone->watermark[WMARK_LOW]  = min_wmark_pages(zone) +
 					low + min;
 		zone->watermark[WMARK_HIGH] = min_wmark_pages(zone) +
