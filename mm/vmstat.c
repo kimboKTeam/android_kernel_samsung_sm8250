@@ -1170,7 +1170,7 @@ const char * const vmstat_text[] = {
 	"zero_page_alloc_total",
 	"zero_page_alloc_prezero",
 #endif
-	"nr_kernel_misc_reclaimable",
+	"", /* nr_indirectly_reclaimable */
 	"nr_unreclaimable_pages",
 
 	/* enum writeback_stat_item counters */
