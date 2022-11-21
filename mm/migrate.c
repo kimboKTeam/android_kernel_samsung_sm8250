@@ -325,13 +325,16 @@ void __migration_entry_wait(struct mm_struct *mm, pte_t *ptep,
 
 	/*
 	 * Once radix-tree replacement of page migration started, page_count
-	 * is zero; but we must not call put_and_wait_on_page_locked() without
-	 * a ref. Use get_page_unless_zero(), and just fault again if it fails.
+	 * *must* be zero. And, we don't want to call wait_on_page_locked()
+	 * against a page without get_page().
+	 * So, we use get_page_unless_zero(), here. Even failed, page fault
+	 * will occur again.
 	 */
 	if (!get_page_unless_zero(page))
 		goto out;
 	pte_unmap_unlock(ptep, ptl);
-	put_and_wait_on_page_locked(page);
+	wait_on_page_locked(page);
+	put_page(page);
 	return;
 out:
 	pte_unmap_unlock(ptep, ptl);
@@ -365,7 +368,8 @@ void pmd_migration_entry_wait(struct mm_struct *mm, pmd_t *pmd)
 	if (!get_page_unless_zero(page))
 		goto unlock;
 	spin_unlock(ptl);
-	put_and_wait_on_page_locked(page);
+	wait_on_page_locked(page);
+	put_page(page);
 	return;
 unlock:
 	spin_unlock(ptl);
